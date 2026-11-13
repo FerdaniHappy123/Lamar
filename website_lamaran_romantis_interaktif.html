@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sebuah Pertanyaan Spesial Untukmu 💍</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Playfair Display & Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Pengaturan Font & Dasar */
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            overflow: hidden;
+            touch-action: manipulation; /* Mencegah double-tap zoom di HP */
+            background: linear-gradient(135deg, #fff0f5 0%, #ffe4e9 45%, #fdf2f8 75%, #fef9c3 100%);
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .font-serif-romantic {
+            font-family: 'Playfair Display', serif;
+        }
+
+        /* Kartu Utama Glassmorphism */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.78);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1.5px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 20px 50px rgba(244, 63, 94, 0.14), 0 4px 16px rgba(251, 191, 36, 0.08);
+        }
+
+        /* Animasi Melayang Lembut untuk Ilustrasi */
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(2deg); }
+        }
+        .animate-float {
+            animation: floatSlow 3.5s ease-in-out infinite;
+        }
+
+        /* Animasi Detak Jantung Halus */
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            14% { transform: scale(1.12); }
+            28% { transform: scale(1); }
+            42% { transform: scale(1.12); }
+            70% { transform: scale(1); }
+        }
+        .animate-heartbeat {
+            animation: heartbeat 2.2s infinite;
+        }
+
+        /* Animasi Partikel Hati & Kelopak di Latar Belakang */
+        .floating-petal {
+            position: fixed;
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0.65;
+            animation: riseUp linear infinite;
+        }
+
+        @keyframes riseUp {
+            0% {
+                transform: translateY(105vh) rotate(0deg) scale(0.8);
+                opacity: 0;
+            }
+            15% {
+                opacity: 0.7;
+            }
+            85% {
+                opacity: 0.7;
+            }
+            100% {
+                transform: translateY(-15vh) rotate(360deg) scale(1.1);
+                opacity: 0;
+            }
+        }
+
+        /* Transisi Tombol Tidak yang Menghindar */
+        #noBtn {
+            transition: left 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), 
+                        top 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), 
+                        transform 0.3s ease, 
+                        opacity 0.35s ease;
+            touch-action: manipulation;
+            z-index: 40;
+        }
+
+        /* Transisi Tombol Mau yang Membesar */
+        #yesBtn {
+            transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), 
+                        box-shadow 0.3s ease,
+                        background-color 0.3s ease;
+            touch-action: manipulation;
+        }
+
+        /* Tooltip / Pesan Lucu Melayang saat Tombol Kabur */
+        .tease-bubble {
+            position: fixed;
+            pointer-events: none;
+            z-index: 45;
+            animation: popFade 1.5s forwards ease-out;
+        }
+
+        @keyframes popFade {
+            0% { opacity: 0; transform: translateY(8px) scale(0.85); }
+            20% { opacity: 1; transform: translateY(0px) scale(1); }
+            80% { opacity: 1; transform: translateY(-12px) scale(1); }
+            100% { opacity: 0; transform: translateY(-22px) scale(0.95); }
+        }
+
+        /* Animasi Masuk Layar Perayaan */
+        @keyframes scaleIn {
+            0% { opacity: 0; transform: scale(0.88); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .animate-scale-in {
+            animation: scaleIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</head>
+<body class="min-h-screen w-full flex items-center justify-center p-4 relative">
+
+    <!-- Canvas untuk Efek Konfeti & Hujan Hati saat Diterima -->
+    <canvas id="celebrationCanvas" class="fixed inset-0 pointer-events-none z-50"></canvas>
+
+    <!-- Kontainer Latar Belakang Hati & Kelopak Bunga -->
+    <div id="bgParticles" class="fixed inset-0 overflow-hidden pointer-events-none z-0"></div>
+
+    <!-- Tombol Pengaturan Kecil di Pojok Kanan Atas untuk Edit Nama / Pertanyaan -->
+    <button id="openEditModalBtn" title="Personalisasi Nama & Pesan"
+        class="fixed top-4 right-4 z-30 bg-white/75 hover:bg-white text-rose-500 border border-rose-200/80 shadow-sm rounded-full p-2.5 transition-all duration-200 flex items-center gap-1.5 text-xs font-medium backdrop-blur-md">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+        </svg>
+        <span class="hidden sm:inline">Edit Nama</span>
+    </button>
+
+    <!-- KARTU UTAMA (TAMPILAN PERTANYAAN LAMARAN) -->
+    <main id="proposalCard" class="glass-card relative z-20 w-full max-w-md rounded-3xl p-6 sm:p-9 text-center transition-all duration-500">
+        
+        <!-- Ilustrasi SVG Cincin & Hati Menggemaskan -->
+        <div class="w-28 h-28 sm:w-32 sm:h-32 mx-auto mb-4 animate-float flex items-center justify-center relative">
+            <!-- Cahaya Latar Lembut -->
+            <div class="absolute inset-2 bg-gradient-to-tr from-rose-200/60 to-amber-100/70 rounded-full blur-xl"></div>
+            
+            <svg viewBox="0 0 140 140" class="w-full h-full relative z-10 drop-shadow-sm" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Hati Kecil Melayang -->
+                <path d="M35 38C35 33.5 39 30 43 32.5C47 30 51 33.5 51 38C51 44 43 49 43 49C43 49 35 44 35 38Z" fill="#FB7185" class="animate-heartbeat"/>
+                <path d="M96 30C96 26.8 98.8 24.5 101.5 26.2C104.2 24.5 107 26.8 107 30C107 34.2 101.5 37.8 101.5 37.8C101.5 37.8 96 34.2 96 30Z" fill="#F43F5E"/>
+                <circle cx="28" cy="65" r="3" fill="#FBBF24"/>
+                <circle cx="112" cy="60" r="2.5" fill="#FBBF24"/>
+
+                <!-- Lingkaran Cincin Emas -->
+                <circle cx="70" cy="84" r="32" stroke="url(#goldRing)" stroke-width="8.5" />
+                <circle cx="70" cy="84" r="32" stroke="#FFFBEB" stroke-width="1.5" stroke-dasharray="14 28" opacity="0.7"/>
+
+                <!-- Dudukan Berlian -->
+                <path d="M61 52L65 45H75L79 52H61Z" fill="#D97706"/>
+                
+                <!-- Berlian Utama -->
+                <polygon points="70,22 86,35 70,51 54,35" fill="url(#diamondGrad)" stroke="#BAE6FD" stroke-width="1.5" stroke-linejoin="round"/>
+                <polygon points="70,22 78,35 70,51 62,35" fill="#FFFFFF" opacity="0.55"/>
+                <line x1="54" y1="35" x2="86" y2="35" stroke="#E0F2FE" stroke-width="1.5"/>
+
+                <!-- Kilau Berlian -->
+                <path d="M70 11V17M70 14H73M67 14H70" stroke="#F59E0B" stroke-width="2" stroke-linecap="round"/>
+                <path d="M92 22L88 26" stroke="#F59E0B" stroke-width="2" stroke-linecap="round"/>
+                <path d="M48 22L52 26" stroke="#F59E0B" stroke-width="2" stroke-linecap="round"/>
+
+                <defs>
+                    <linearGradient id="goldRing" x1="38" y1="52" x2="102" y2="116" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stop-color="#FDE68A"/>
+                        <stop offset="45%" stop-color="#F59E0B"/>
+                        <stop offset="100%" stop-color="#D97706"/>
+                    </linearGradient>
+                    <linearGradient id="diamondGrad" x1="54" y1="22" x2="86" y2="51" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stop-color="#E0F2FE"/>
+                        <stop offset="50%" stop-color="#7DD3FC"/>
+                        <stop offset="100%" stop-color="#38BDF8"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+        </div>
+
+        <!-- Sapaan Nama Pasangan -->
+        <div class="inline-block px-3.5 py-1 rounded-full bg-rose-100/80 text-rose-600 text-xs sm:text-sm font-semibold tracking-wide mb-3">
+            Untuk <span id="displayPartnerName">Kamu yang Tersayang</span> ✨
+        </div>
+
+        <!-- Pertanyaan Utama -->
+        <h1 id="displayQuestion" class="font-serif-romantic text-2xl sm:text-4xl font-bold text-slate-800 leading-snug mb-3">
+            Maukah Kamu Menikah Denganku?
+        </h1>
+
+        <!-- Sub-teks Romantis & Dinamis -->
+        <p id="subText" class="text-slate-600 text-sm sm:text-base leading-relaxed mb-7 min-h-[3rem] flex items-center justify-center px-2 transition-all duration-300">
+            Dari sekian banyak kebetulan di dunia ini, bertemu dan mencintaimu adalah hal terbaik yang pernah terjadi dalam hidupku.
+        </p>
+
+        <!-- Area Tombol Aksi -->
+        <div id="buttonContainer" class="flex flex-wrap items-center justify-center gap-4 min-h-[64px] relative">
+            <!-- Tombol MAU -->
+            <button id="yesBtn"
+                class="bg-gradient-to-r from-rose-500 via-pink-500 to-rose-500 hover:from-rose-600 hover:to-pink-600 text-white font-bold py-3.5 px-8 rounded-2xl shadow-lg shadow-rose-300/60 active:scale-95 text-base sm:text-lg flex items-center gap-2 cursor-pointer z-30">
+                <span>Mau!</span>
+                <span class="text-xl">💍</span>
+            </button>
+
+            <!-- Placeholder agar layout tetap rapi saat tombol Tidak berubah menjadi position: fixed -->
+            <div id="noBtnPlaceholder" class="hidden"></div>
+
+            <!-- Tombol TIDAK -->
+            <button id="noBtn"
+                class="bg-white/90 hover:bg-slate-50 text-slate-500 border border-slate-200 font-semibold py-3.5 px-7 rounded-2xl shadow-sm text-sm sm:text-base cursor-pointer select-none">
+                Tidak
+            </button>
+        </div>
+
+        <!-- Petunjuk Kecil di Bawah -->
+        <p id="hintText" class="mt-6 text-[11px] text-rose-400/80 font-medium">
+            *Pilih dengan sepenuh hati ya 💕
+        </p>
+    </main>
+
+    <!-- KARTU PERAYAAN (MUNCUL SAAT TOMBOL MAU DIKLIK) -->
+    <section id="celebrationCard" class="glass-card hidden relative z-20 w-full max-w-md rounded-3xl p-6 sm:p-9 text-center animate-scale-in">
+        <!-- Lencana Perayaan -->
+        <div class="w-24 h-24 mx-auto mb-4 bg-gradient-to-tr from-rose-500 to-amber-400 rounded-full p-1 shadow-lg shadow-rose-300/50 animate-heartbeat">
+            <div class="w-full h-full bg-white rounded-full flex items-center justify-center text-5xl">
+                👩‍❤️‍👨
+            </div>
+        </div>
+
+        <span class="inline-block px-3.5 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-bold tracking-wider uppercase mb-2">
+            She/He Said Yes! 🎉
+        </span>
+
+        <h2 class="font-serif-romantic text-2xl sm:text-3xl font-bold text-slate-800 leading-tight mb-3">
+            Yey! Resmi Calon Pasangan Hidup! 💖
+        </h2>
+
+        <p id="celebrationMessage" class="text-slate-600 text-sm sm:text-base leading-relaxed mb-5">
+            Terima kasih sudah menerima lamaranku, <span id="celebrationPartnerName" class="font-semibold text-rose-600">Sayang</span>. Mulai hari ini, mari kita tulis babak terindah dalam hidup kita bersama selamanya!
+        </p>
+
+        <!-- Kotak Tanggal Spesial -->
+        <div class="bg-rose-50/90 border border-rose-200/70 rounded-2xl p-3.5 mb-6">
+            <p class="text-xs text-rose-400 font-medium uppercase tracking-wider mb-0.5">Momen Spesial Kita</p>
+            <p id="specialDateText" class="text-sm sm:text-base font-bold text-rose-700"></p>
+        </div>
+
+        <!-- Tombol Bagikan & Salin Ucapan -->
+        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+            <button id="shareWhatsAppBtn"
+                class="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold py-3 px-4 rounded-2xl shadow-md shadow-emerald-200 transition-all active:scale-95 flex items-center justify-center gap-2 text-sm cursor-pointer">
+                <span>Kabar ke WhatsApp</span>
+                <span>💌</span>
+            </button>
+
+            <button id="copyQuoteBtn"
+                class="flex-1 bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 font-semibold py-3 px-4 rounded-2xl shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2 text-sm cursor-pointer">
+                <span id="copyBtnText">Salin Ucapan</span>
+                <span>📋</span>
+            </button>
+        </div>
+
+        <!-- Tombol Ulangi / Reset (Kecil) -->
+        <button id="resetBtn" class="mt-5 text-xs text-slate-400 hover:text-rose-500 underline transition-colors cursor-pointer">
+            Ulangi dari awal
+        </button>
+    </section>
+
+    <!-- MODAL KUSTOMISASI NAMA & PERTANYAAN -->
+    <div id="editModal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl border border-rose-100 animate-scale-in">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-serif-romantic text-xl font-bold text-slate-800">Personalisasi Lamaran ✨</h3>
+                <button id="closeEditModalBtn" class="text-slate-400 hover:text-slate-600 p-1 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="space-y-4 text-left">
+                <div>
+                    <label for="inputPartnerName" class="block text-xs font-semibold text-slate-600 mb-1">Nama Pasangan / Panggilan</label>
+                    <input type="text" id="inputPartnerName" placeholder="Contoh: Sayang, Putri, Budi..."
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-rose-200 focus:outline-none focus:ring-2 focus:ring-rose-400 text-sm text-slate-700">
+                </div>
+
+                <div>
+                    <label for="inputQuestion" class="block text-xs font-semibold text-slate-600 mb-1">Kalimat Pertanyaan Utama</label>
+                    <input type="text" id="inputQuestion" value="Maukah Kamu Menikah Denganku?"
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-rose-200 focus:outline-none focus:ring-2 focus:ring-rose-400 text-sm text-slate-700">
+                </div>
+
+                <button id="saveCustomBtn"
+                    class="w-full bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white font-bold py-3 rounded-xl shadow-md shadow-rose-200 transition-all active:scale-95 text-sm cursor-pointer">
+                    Simpan & Terapkan 💖
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifikasi Salin Berhasil -->
+    <div id="toastNotification" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-800/90 text-white text-xs sm:text-sm font-medium px-4 py-2.5 rounded-full shadow-lg opacity-0 pointer-events-none transition-opacity duration-300">
+        Ucapan berhasil disalin! 💕
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- ELEMEN DOM ---
+            const proposalCard = document.getElementById('proposalCard');
+            const celebrationCard = document.getElementById('celebrationCard');
+            const yesBtn = document.getElementById('yesBtn');
+            const noBtn = document.getElementById('noBtn');
+            const noBtnPlaceholder = document.getElementById('noBtnPlaceholder');
+            const subText = document.getElementById('subText');
+            const hintText = document.getElementById('hintText');
+
+            // Elemen Kustomisasi
+            const openEditModalBtn = document.getElementById('openEditModalBtn');
+            const closeEditModalBtn = document.getElementById('closeEditModalBtn');
+            const editModal = document.getElementById('editModal');
+            const inputPartnerName = document.getElementById('inputPartnerName');
+            const inputQuestion = document.getElementById('inputQuestion');
+            const saveCustomBtn = document.getElementById('saveCustomBtn');
+            const displayPartnerName = document.getElementById('displayPartnerName');
+            const displayQuestion = document.getElementById('displayQuestion');
+            const celebrationPartnerName = document.getElementById('celebrationPartnerName');
+
+            // Elemen Perayaan & Aksi
+            const specialDateText = document.getElementById('specialDateText');
+            const shareWhatsAppBtn = document.getElementById('shareWhatsAppBtn');
+            const copyQuoteBtn = document.getElementById('copyQuoteBtn');
+            const copyBtnText = document.getElementById('copyBtnText');
+            const resetBtn = document.getElementById('resetBtn');
+            const toastNotification = document.getElementById('toastNotification');
+
+            // --- STATE APLIKASI ---
+            let dodgeCount = 0;
+            const maxDodgesBeforeVanish = 7; // Tombol "Tidak" menghilang pada percobaan ke-7
+            let isNoBtnFloating = false;
+            let yesScale = 1;
+            let partnerName = "Kamu yang Tersayang";
+
+            // Daftar pesan lucu/gombalan setiap kali tombol "Tidak" kabur
+            const teaseMessages = [
+                "Eits, nggak kena! Coba lagi dong 😜",
+                "Yakin nih mau pencet tombol yang ini? 🥺",
+                "Tombol 'Tidak'-nya lagi pemalu hari ini 🙈",
+                "Wleee, kecepetan kan menghindarnya! 🏃‍♂️💨",
+                "Coba pikir lagi dong, masa nolak yang tulus? 💕",
+                "Duh, tombolnya makin kecil tuh, pencet 'Mau!' aja yuk ✨",
+                "Yah... tombol 'Tidak'-nya menyerah dan menghilang! Tinggal 'Mau!' nih 😍"
+            ];
+
+            const shortBubbles = [
+                "Eits! 😜",
+                "Nggak kena! 🙈",
+                "Yakin? 🥺",
+                "Wleee! 💨",
+                "Jangan dong 💖",
+                "Ups, geser! ✨"
+            ];
+
+            // --- 1. PARTIKEL LATAR BELAKANG (HATI & KELOPAK BUNGA) ---
+            function createBackgroundParticles() {
+                const container = document.getElementById('bgParticles');
+                const symbols = ['💖', '🌸', '💕', '✨', '🌷', '🤍'];
+                const particleCount = window.innerWidth < 640 ? 16 : 26;
+
+                for (let i = 0; i < particleCount; i++) {
+                    const el = document.createElement('div');
+                    el.className = 'floating-petal select-none';
+                    el.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+                    
+                    const leftPos = Math.random() * 100;
+                    const duration = 9 + Math.random() * 10;
+                    const delay = Math.random() * -15;
+                    const size = 14 + Math.random() * 14;
+
+                    el.style.left = `${leftPos}vw`;
+                    el.style.fontSize = `${size}px`;
+                    el.style.animationDuration = `${duration}s`;
+                    el.style.animationDelay = `${delay}s`;
+
+                    container.appendChild(el);
+                }
+            }
+            createBackgroundParticles();
+
+            // --- 2. LOGIKA TOMBOL "TIDAK" MENGHINDAR (DESKTOP & HP) ---
+            function showTeaseBubble(x, y, text) {
+                const bubble = document.createElement('div');
+                bubble.className = 'tease-bubble bg-rose-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md';
+                bubble.textContent = text;
+                
+                // Pastikan bubble tetap di dalam area layar
+                const safeX = Math.min(Math.max(x, 20), window.innerWidth - 120);
+                const safeY = Math.max(y - 36, 20);
+                
+                bubble.style.left = `${safeX}px`;
+                bubble.style.top = `${safeY}px`;
+                document.body.appendChild(bubble);
+
+                setTimeout(() => {
+                    bubble.remove();
+                }, 1500);
+            }
+
+            function moveNoButton(event) {
+                // Cegah klik atau sentuhan default agar tidak sempat terpicu
+                if (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+
+                // Jika sudah menghilang, abaikan
+                if (dodgeCount >= maxDodgesBeforeVanish) return;
+
+                // Ambil posisi awal tombol sebelum dipindahkan
+                const rect = noBtn.getBoundingClientRect();
+
+                // Jika pertama kali kabur, pindahkan tombol ke body dengan position: fixed
+                // agar bebas bergerak di seluruh viewport tanpa terpotong overflow card
+                if (!isNoBtnFloating) {
+                    isNoBtnFloating = true;
+                    noBtnPlaceholder.style.width = `${rect.width}px`;
+                    noBtnPlaceholder.style.height = `${rect.height}px`;
+                    noBtnPlaceholder.classList.remove('hidden');
+
+                    document.body.appendChild(noBtn);
+                    noBtn.style.position = 'fixed';
+                    noBtn.style.left = `${rect.left}px`;
+                    noBtn.style.top = `${rect.top}px`;
+                    noBtn.style.margin = '0';
+                }
+
+                dodgeCount++;
+
+                // Tampilkan pesan gombalan di sub-teks kartu
+                const messageIndex = Math.min(dodgeCount - 1, teaseMessages.length - 1);
+                subText.textContent = teaseMessages[messageIndex];
+                subText.classList.add('text-rose-600', 'font-medium');
+
+                // Perbesar tombol "Mau!" secara bertahap agar makin menarik perhatian
+                yesScale = Math.min(yesScale + 0.11, 1.65);
+                yesBtn.style.transform = `scale(${yesScale})`;
+
+                // Jika mencapai batas maksimal percobaan, tombol "Tidak" mengecil lalu menghilang
+                if (dodgeCount >= maxDodgesBeforeVanish) {
+                    showTeaseBubble(rect.left, rect.top, "Bye-bye! 👋💨");
+                    noBtn.style.transform = 'scale(0) rotate(25deg)';
+                    noBtn.style.opacity = '0';
+                    noBtn.style.pointerEvents = 'none';
+                    noBtnPlaceholder.classList.add('hidden');
+                    hintText.textContent = "Sekarang tinggal satu pilihan terbaik untuk kita berdua 💍💖";
+
+                    setTimeout(() => {
+                        noBtn.style.display = 'none';
+                    }, 350);
+                    return;
+                }
+
+                // Tampilkan bubble singkat di posisi tombol lama
+                const randomBubble = shortBubbles[Math.floor(Math.random() * shortBubbles.length)];
+                showTeaseBubble(rect.left, rect.top, randomBubble);
+
+                // Hitung batas aman layar (viewport) agar tombol tidak pernah keluar layar di HP maupun Desktop
+                const padding = 20; // Jarak aman dari tepi layar
+                const btnWidth = noBtn.offsetWidth || 105;
+                const btnHeight = noBtn.offsetHeight || 48;
+
+                const minX = padding;
+                const maxX = Math.max(minX + 10, window.innerWidth - btnWidth - padding);
+                const minY = padding + 45; // Beri ruang agar tidak menabrak tombol Edit di pojok atas
+                const maxY = Math.max(minY + 10, window.innerHeight - btnHeight - padding);
+
+                // Cari koordinat acak baru yang cukup jauh dari posisi sekarang (minimal 80px)
+                let newX, newY;
+                let attempts = 0;
+                do {
+                    newX = Math.floor(Math.random() * (maxX - minX + 1)) + minX;
+                    newY = Math.floor(Math.random() * (maxY - minY + 1)) + minY;
+                    attempts++;
+                } while (
+                    Math.hypot(newX - rect.left, newY - rect.top) < 85 &&
+                    attempts < 15
+                );
+
+                // Sedikit mengecilkan tombol "Tidak" setiap kali kabur
+                const shrinkScale = Math.max(1 - (dodgeCount * 0.06), 0.68);
+
+                // Terapkan posisi baru menggunakan requestAnimationFrame agar animasi transisi mulus
+                requestAnimationFrame(() => {
+                    noBtn.style.left = `${newX}px`;
+                    noBtn.style.top = `${newY}px`;
+                    noBtn.style.transform = `scale(${shrinkScale})`;
+                });
+            }
+
+            // Event Listener Desktop (saat kursor mendekati)
+            noBtn.addEventListener('mouseover', moveNoButton);
+            
+            // Event Listener HP / Layar Sentuh (saat jari menyentuh layar sebelum klik selesai)
+            noBtn.addEventListener('touchstart', moveNoButton, { passive: false });
+            
+            // Fallback jika terklik lewat keyboard atau pointer cepat
+            noBtn.addEventListener('click', moveNoButton);
+
+            // Pastikan tombol "Tidak" tetap di dalam layar jika ukuran layar/rotasi HP berubah
+            window.addEventListener('resize', () => {
+                if (isNoBtnFloating && noBtn.style.display !== 'none') {
+                    const padding = 20;
+                    const maxX = Math.max(padding, window.innerWidth - noBtn.offsetWidth - padding);
+                    const maxY = Math.max(padding, window.innerHeight - noBtn.offsetHeight - padding);
+                    
+                    const currentLeft = parseFloat(noBtn.style.left) || padding;
+                    const currentTop = parseFloat(noBtn.style.top) || padding;
+
+                    noBtn.style.left = `${Math.min(Math.max(currentLeft, padding), maxX)}px`;
+                    noBtn.style.top = `${Math.min(Math.max(currentTop, padding), maxY)}px`;
+                }
+            });
+
+            // --- 3. LOGIKA TOMBOL "MAU!" & PERAYAAN KONFETI ---
+            function formatTanggalIndonesia() {
+                const opsi = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                return new Date().toLocaleDateString('id-ID', opsi);
+            }
+
+            yesBtn.addEventListener('click', () => {
+                // Sembunyikan tombol Tidak jika masih melayang di body
+                noBtn.style.display = 'none';
+                openEditModalBtn.classList.add('hidden');
+
+                // Set tanggal hari ini dan nama pasangan di kartu perayaan
+                specialDateText.textContent = formatTanggalIndonesia();
+                const cleanName = partnerName === "Kamu yang Tersayang" ? "Sayang" : partnerName;
+                celebrationPartnerName.textContent = cleanName;
+
+                // Transisi kartu
+                proposalCard.classList.add('hidden');
+                celebrationCard.classList.remove('hidden');
+
+                // Jalankan ledakan konfeti dan hujan hati
+                startCelebrationConfetti();
+            });
+
+            // --- 4. CANVAS KONFETI & HUJAN HATI ---
+            function startCelebrationConfetti() {
+                const canvas = document.getElementById('celebrationCanvas');
+                const ctx = canvas.getContext('2d');
+                
+                function resizeCanvas() {
+                    canvas.width = window.innerWidth;
+                    canvas.height = window.innerHeight;
+                }
+                resizeCanvas();
+                window.addEventListener('resize', resizeCanvas);
+
+                const particles = [];
+                const colors = ['#f43f5e', '#fb7185', '#ec4899', '#fbbf24', '#f59e0b', '#a855f7', '#38bdf8'];
+                const shapes = ['heart', 'circle', 'ribbon'];
+
+                // Buat 130 partikel konfeti dari tengah & atas layar
+                for (let i = 0; i < 130; i++) {
+                    const isBurst = i < 70;
+                    particles.push({
+                        x: isBurst ? canvas.width / 2 : Math.random() * canvas.width,
+                        y: isBurst ? canvas.height / 2 : -20 - Math.random() * 200,
+                        vx: isBurst ? (Math.random() - 0.5) * 16 : (Math.random() - 0.5) * 3,
+                        vy: isBurst ? (Math.random() - 0.7) * 16 : 2 + Math.random() * 4,
+                        size: 6 + Math.random() * 8,
+                        color: colors[Math.floor(Math.random() * colors.length)],
+                        shape: shapes[Math.floor(Math.random() * shapes.length)],
+                        rotation: Math.random() * 360,
+                        vRot: (Math.random() - 0.5) * 8,
+                        gravity: 0.22,
+                        drag: 0.98
+                    });
+                }
+
+                function drawHeart(ctx, x, y, size, color, rotation) {
+                    ctx.save();
+                    ctx.translate(x, y);
+                    ctx.rotate((rotation * Math.PI) / 180);
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    const topCurveHeight = size * 0.3;
+                    ctx.moveTo(0, topCurveHeight);
+                    ctx.bezierCurveTo(0, 0, -size / 2, 0, -size / 2, topCurveHeight);
+                    ctx.bezierCurveTo(-size / 2, (size + topCurveHeight) / 2, 0, (size + topCurveHeight) / 1.4, 0, size);
+                    ctx.bezierCurveTo(0, (size + topCurveHeight) / 1.4, size / 2, (size + topCurveHeight) / 2, size / 2, topCurveHeight);
+                    ctx.bezierCurveTo(size / 2, 0, 0, 0, 0, topCurveHeight);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.restore();
+                }
+
+                let animationFrameId;
+                function animateConfetti() {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                    for (let i = 0; i < particles.length; i++) {
+                        const p = particles[i];
+                        p.vx *= p.drag;
+                        p.vy += p.gravity;
+                        p.x += p.vx;
+                        p.y += p.vy;
+                        p.rotation += p.vRot;
+
+                        // Reset ke atas layar jika sudah jatuh ke bawah agar hujan hati terus berlanjut lembut
+                        if (p.y > canvas.height + 20) {
+                            p.y = -15;
+                            p.x = Math.random() * canvas.width;
+                            p.vy = 2 + Math.random() * 3;
+                            p.vx = (Math.random() - 0.5) * 2;
+                        }
+
+                        if (p.shape === 'heart') {
+                            drawHeart(ctx, p.x, p.y, p.size * 1.4, p.color, p.rotation);
+                        } else if (p.shape === 'circle') {
+                            ctx.save();
+                            ctx.fillStyle = p.color;
+                            ctx.beginPath();
+                            ctx.arc(p.x, p.y, p.size / 2, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.restore();
+                        } else {
+                            ctx.save();
+                            ctx.translate(p.x, p.y);
+                            ctx.rotate((p.rotation * Math.PI) / 180);
+                            ctx.fillStyle = p.color;
+                            ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+                            ctx.restore();
+                        }
+                    }
+
+                    animationFrameId = requestAnimationFrame(animateConfetti);
+                }
+
+                animateConfetti();
+
+                // Simpan ID animasi agar bisa dihentikan saat reset
+                celebrationCard.dataset.animId = animationFrameId;
+            }
+
+            // --- 5. FITUR KUSTOMISASI NAMA & PERTANYAAN ---
+            openEditModalBtn.addEventListener('click', () => {
+                inputPartnerName.value = partnerName === "Kamu yang Tersayang" ? "" : partnerName;
+                inputQuestion.value = displayQuestion.textContent;
+                editModal.classList.remove('hidden');
+                editModal.classList.add('flex');
+            });
+
+            function closeEditModal() {
+                editModal.classList.add('hidden');
+                editModal.classList.remove('flex');
+            }
+
+            closeEditModalBtn.addEventListener('click', closeEditModal);
+            editModal.addEventListener('click', (e) => {
+                if (e.target === editModal) closeEditModal();
+            });
+
+            saveCustomBtn.addEventListener('click', () => {
+                const newName = inputPartnerName.value.trim();
+                const newQ = inputQuestion.value.trim();
+
+                partnerName = newName !== "" ? newName : "Kamu yang Tersayang";
+                displayPartnerName.textContent = partnerName;
+
+                if (newQ !== "") {
+                    displayQuestion.textContent = newQ;
+                }
+
+                closeEditModal();
+                showToast("Tampilan berhasil diperbarui! ✨");
+            });
+
+            // --- 6. FITUR BAGIKAN WHATSAPP & SALIN UCAPAN ---
+            function showToast(msg) {
+                toastNotification.textContent = msg;
+                toastNotification.classList.remove('opacity-0');
+                setTimeout(() => {
+                    toastNotification.classList.add('opacity-0');
+                }, 2500);
+            }
+
+            shareWhatsAppBtn.addEventListener('click', () => {
+                const tgl = formatTanggalIndonesia();
+                const teksWA = `I said YES! 💍💖\n\nHari ini (${tgl}), aku resmi menerima lamaranmu. Mari kita mulai perjalanan terindah dalam hidup kita bersama selamanya! 🥰✨`;
+                const urlWA = `https://wa.me/?text=${encodeURIComponent(teksWA)}`;
+                window.open(urlWA, '_blank');
+            });
+
+            copyQuoteBtn.addEventListener('click', () => {
+                const tgl = formatTanggalIndonesia();
+                const teksSalin = `I said YES! 💍💖 (${tgl}) — Resmi menjadi calon pasangan hidup selamanya! 🥰✨`;
+                
+                // Gunakan metode kompatibel iframe (execCommand)
+                const tempInput = document.createElement('textarea');
+                tempInput.value = teksSalin;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempInput);
+
+                copyBtnText.textContent = "Tersalin!";
+                showToast("Ucapan kebahagiaan berhasil disalin! 💕");
+                setTimeout(() => {
+                    copyBtnText.textContent = "Salin Ucapan";
+                }, 2000);
+            });
+
+            // --- 7. RESET / ULANGI DARI AWAL ---
+            resetBtn.addEventListener('click', () => {
+                // Hentikan animasi konfeti
+                const animId = celebrationCard.dataset.animId;
+                if (animId) cancelAnimationFrame(Number(animId));
+                const canvas = document.getElementById('celebrationCanvas');
+                canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+
+                // Reset variabel & posisi tombol Tidak
+                dodgeCount = 0;
+                isNoBtnFloating = false;
+                yesScale = 1;
+                yesBtn.style.transform = 'scale(1)';
+
+                const buttonContainer = document.getElementById('buttonContainer');
+                noBtnPlaceholder.classList.add('hidden');
+                buttonContainer.appendChild(noBtn);
+                noBtn.style.position = 'static';
+                noBtn.style.left = 'auto';
+                noBtn.style.top = 'auto';
+                noBtn.style.transform = 'scale(1)';
+                noBtn.style.opacity = '1';
+                noBtn.style.display = 'inline-block';
+                noBtn.style.pointerEvents = 'auto';
+
+                // Reset teks
+                subText.textContent = "Dari sekian banyak kebetulan di dunia ini, bertemu dan mencintaimu adalah hal terbaik yang pernah terjadi dalam hidupku.";
+                subText.classList.remove('text-rose-600', 'font-medium');
+                hintText.textContent = "*Pilih dengan sepenuh hati ya 💕";
+
+                // Tampilkan kembali kartu utama
+                celebrationCard.classList.add('hidden');
+                proposalCard.classList.remove('hidden');
+                openEditModalBtn.classList.remove('hidden');
+            });
+        });
+    </script>
+</body>
+</html>
